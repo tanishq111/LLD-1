@@ -1,0 +1,1298 @@
+#include <iostream>
+#include <vector>
+#include <memory>
+using namespace std;
+
+// Abstract base class //no object creation is possible
+class Shape {
+protected:
+    string color;
+    
+public:
+    Shape(string c) : color(c) {}
+    
+    // Pure virtual function makes this class abstract
+    virtual double calculateArea() = 0;
+    virtual double calculatePerimeter() = 0;
+    
+    // Virtual destructor for proper cleanup
+    virtual ~Shape() {}
+    
+    // Concrete method
+    void setColor(string c) {
+        color = c;
+    }
+    
+    string getColor() const {
+        return color;
+    }
+    
+    // Template method pattern
+    void displayInfo() {
+        cout << "Shape: " << getShapeType() 
+             << ", Color: " << color 
+             << ", Area: " << calculateArea()
+             << ", Perimeter: " << calculatePerimeter() << endl;
+    }
+    
+    virtual string getShapeType() = 0;
+};
+
+// Concrete implementation - Rectangle
+class Rectangle : public Shape {
+private:
+    double width, height;
+    
+public:
+    Rectangle(double w, double h, string c) : Shape(c), width(w), height(h) {}
+    
+    double calculateArea() override {
+        return width * height;
+    }
+    
+    double calculatePerimeter() override {
+        return 2 * (width + height);
+    }
+    
+    string getShapeType() override {
+        return "Rectangle";
+    }
+};
+
+// Concrete implementation - Circle
+class Circle : public Shape {
+private:
+    double radius;
+    const double PI = 3.14159;
+    
+public:
+    Circle(double r, string c) : Shape(c), radius(r) {}
+    
+    double calculateArea() override {
+        return PI * radius * radius;
+    }
+    
+    double calculatePerimeter() override {
+        return 2 * PI * radius;
+    }
+    
+    string getShapeType() override {
+        return "Circle";
+    }
+};
+
+int main() {
+    // Cannot instantiate abstract class
+     //Shape shape("Blue"); 
+    
+    vector<unique_ptr<Shape>> shapes;
+    shapes.push_back(make_unique<Rectangle>(5.0, 3.0, "Red"));
+    shapes.push_back(make_unique<Circle>(4.0, "Blue"));
+    
+    for (auto& shape : shapes) {
+        shape->displayInfo();
+    }
+    
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#include <iostream>
+#include <string>
+#include <vector>
+
+// Base class
+class Person {
+protected:
+    std::string name;
+    int age;
+    std::string address;
+    
+public:
+    Person(const std::string& n, int a, const std::string& addr) 
+        : name(n), age(a), address(addr) {}
+    
+    virtual void displayInfo() const {
+        std::cout << "Name: " << name << std::endl;
+        std::cout << "Age: " << age << std::endl;
+        std::cout << "Address: " << address << std::endl;
+    }
+    
+    virtual void introduce() const {
+        std::cout << "Hi, I'm " << name << std::endl;
+    }
+    
+    // Getters
+    std::string getName() const { return name; }
+    int getAge() const { return age; }
+    
+    virtual ~Person() = default;
+};
+
+// Single Inheritance - Employee inherits from Person
+class Employee : public Person {
+protected:
+    std::string employeeId;
+    double salary;
+    std::string department;
+    
+public:
+    Employee(const std::string& n, int a, const std::string& addr, 
+             const std::string& empId, double sal, const std::string& dept)
+        : Person(n, a, addr), employeeId(empId), salary(sal), department(dept) {}
+    
+    void displayInfo() const override {
+        Person::displayInfo(); // Call base class method
+        std::cout << "Employee ID: " << employeeId << std::endl;
+        std::cout << "Salary: $" << salary << std::endl;
+        std::cout << "Department: " << department << std::endl;
+    }
+    
+    void introduce() const override {
+        std::cout << "Hi, I'm " << name << ", I work in " << department << std::endl;
+    }
+    
+    virtual double calculateBonus() const {
+        return salary * 0.1; // 10% bonus
+    }
+    
+    // Employee-specific methods
+    void raiseSalary(double percentage) {
+        salary += salary * (percentage / 100);
+        std::cout << name << "'s salary raised by " << percentage << "%" << std::endl;
+    }
+    
+    double getSalary() const { return salary; }
+    std::string getDepartment() const { return department; }
+};
+
+// Multilevel Inheritance - Manager inherits from Employee
+class Manager : public Employee {
+private:
+    std::vector<Employee> teamMembers;
+    double managementBonus;
+    
+public:
+    Manager(const std::string& n, int a, const std::string& addr, 
+            const std::string& empId, double sal, const std::string& dept, double mgmtBonus)
+        : Employee(n, a, addr, empId, sal, dept), managementBonus(mgmtBonus) {}
+    
+    void displayInfo() const override {
+        Employee::displayInfo(); // Call parent class method
+        std::cout << "Management Bonus: $" << managementBonus << std::endl;
+        std::cout << "Team Size: " << teamMembers.size() << std::endl;
+        std::cout << "Team Members: ";
+        for (const auto& member : teamMembers) {
+            std::cout << member << " ";
+        }
+        std::cout << std::endl;
+    }
+    
+    void introduce() const override {
+        std::cout << "Hi, I'm " << name << ", I'm a manager in " << department 
+                  << " with " << teamMembers.size() << " team members" << std::endl;
+    }
+    
+    double calculateBonus() const override {
+        return Employee::calculateBonus() + managementBonus + (teamMembers.size() * 500);
+    }
+    
+    // Manager-specific methods
+    void addTeamMember(const std::string& member) {
+        teamMembers.push_back(member);
+        std::cout << member << " added to " << name << "'s team" << std::endl;
+    }
+    
+    void removeTeamMember(const std::string& member) {
+        auto it = std::find(teamMembers.begin(), teamMembers.end(), member);
+        if (it != teamMembers.end()) {
+            teamMembers.erase(it);
+            std::cout << member << " removed from " << name << "'s team" << std::endl;
+        }
+    }
+    
+    void conductMeeting() const {
+        std::cout << name << " is conducting a team meeting with " 
+                  << teamMembers.size() << " members" << std::endl;
+    }
+};
+
+// Multiple Inheritance Example
+class Skill {
+protected:
+    std::vector<std::string> skills;
+    
+public:
+    void addSkill(const std::string& skill) {
+        skills.push_back(skill);
+    }
+    
+    void displaySkills() const {
+        std::cout << "Skills: ";
+        for (const auto& skill : skills) {
+            std::cout << skill << " ";
+        }
+        std::cout << std::endl;
+    }
+    
+    bool hasSkill(const std::string& skill) const {
+        return std::find(skills.begin(), skills.end(), skill) != skills.end();
+    }
+};
+
+// Multiple Inheritance - Developer inherits from both Employee and Skill
+class Developer : public Employee, public Skill {
+private:
+    std::string programmingLanguage;
+    int projectsCompleted;
+    
+public:
+    Developer(const std::string& n, int a, const std::string& addr, 
+              const std::string& empId, double sal, const std::string& progLang)
+        : Employee(n, a, addr, empId, sal, "IT"), programmingLanguage(progLang), projectsCompleted(0) {}
+    
+    void displayInfo() const override {
+        Employee::displayInfo();
+        std::cout << "Primary Language: " << programmingLanguage << std::endl;
+        std::cout << "Projects Completed: " << projectsCompleted << std::endl;
+        displaySkills();
+    }
+    
+    void introduce() const override {
+        std::cout << "Hi, I'm " << name << ", I'm a " << programmingLanguage 
+                  << " developer" << std::endl;
+    }
+    
+    double calculateBonus() const override {
+        return Employee::calculateBonus() + (projectsCompleted * 1000);
+    }
+    
+    void completeProject() {
+        projectsCompleted++;
+        std::cout << name << " completed a project! Total: " << projectsCompleted << std::endl;
+    }
+    
+    void writeCode() const {
+        std::cout << name << " is writing " << programmingLanguage << " code" << std::endl;
+    }
+};
+
+int main() {
+    // Creating objects of different classes
+    Person person("John Doe", 30, "123 Main St");
+    Employee employee("Jane Smith", 25, "456 Oak Ave", "EMP001", 50000, "Marketing");
+    Manager manager("Bob Johnson", 35, "789 Pine Rd", "MGR001", 80000, "IT", 5000);
+    Developer developer("Alice Brown", 28, "321 Elm St", "DEV001", 70000, "C++");
+    
+    // Demonstrating inheritance
+    std::cout << "=== Person ===" << std::endl;
+    person.displayInfo();
+    person.introduce();
+    
+    std::cout << "\n=== Employee ===" << std::endl;
+    employee.displayInfo();
+    employee.introduce();
+    std::cout << "Bonus: $" << employee.calculateBonus() << std::endl;
+    
+    std::cout << "\n=== Manager ===" << std::endl;
+    manager.addTeamMember("Alice");
+    manager.addTeamMember("Charlie");
+    manager.displayInfo();
+    manager.introduce();
+    manager.conductMeeting();
+    std::cout << "Total Bonus: $" << manager.calculateBonus() << std::endl;
+    
+    std::cout << "\n=== Developer (Multiple Inheritance) ===" << std::endl;
+    developer.addSkill("C++");
+    developer.addSkill("Python");
+    developer.addSkill("JavaScript");
+    developer.completeProject();
+    developer.completeProject();
+    developer.displayInfo();
+    developer.introduce();
+    developer.writeCode();
+    std::cout << "Total Bonus: $" << developer.calculateBonus() << std::endl;
+    
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <string>
+
+// Base class with virtual functions
+class Animal {
+protected:
+    std::string name;
+    int age;
+    
+public:
+    Animal(const std::string& n, int a) : name(n), age(a) {}
+    
+    // Virtual functions for runtime polymorphism
+    virtual void makeSound() const {
+        std::cout << name << " makes a generic animal sound" << std::endl;
+    }
+    
+    virtual void move() const {
+        std::cout << name << " moves around" << std::endl;
+    }
+    
+    virtual void eat() const {
+        std::cout << name << " eats food" << std::endl;
+    }
+    
+    // Pure virtual function - makes Animal abstract
+    virtual std::string getSpecies() const = 0;
+    
+    // Non-virtual function
+    void sleep() const {
+        std::cout << name << " is sleeping" << std::endl;
+    }
+    
+    // Virtual destructor for proper cleanup
+    virtual ~Animal() {
+        std::cout << "Animal " << name << " destructor called" << std::endl;
+    }
+    
+    std::string getName() const { return name; }
+    int getAge() const { return age; }
+};
+
+class Dog : public Animal {
+private:
+    std::string breed;
+    
+public:
+    Dog(const std::string& n, int a, const std::string& b) 
+        : Animal(n, a), breed(b) {}
+    
+    // Override virtual functions
+    void makeSound() const override {
+        std::cout << name << " barks: Woof! Woof!" << std::endl;
+    }
+    
+    void move() const override {
+        std::cout << name << " runs on four legs" << std::endl;
+    }
+    
+    void eat() const override {
+        std::cout << name << " eats dog food" << std::endl;
+    }
+    
+    std::string getSpecies() const override {
+        return "Canis familiaris (" + breed + ")";
+    }
+    
+    // Dog-specific method
+    void wagTail() const {
+        std::cout << name << " wags tail happily" << std::endl;
+    }
+    
+    ~Dog() {
+        std::cout << "Dog " << name << " destructor called" << std::endl;
+    }
+};
+
+class Cat : public Animal {
+private:
+    bool isIndoor;
+    
+public:
+    Cat(const std::string& n, int a, bool indoor) 
+        : Animal(n, a), isIndoor(indoor) {}
+    
+    void makeSound() const override {
+        std::cout << name << " meows: Meow! Meow!" << std::endl;
+    }
+    
+    void move() const override {
+        std::cout << name << " walks gracefully and climbs" << std::endl;
+    }
+    
+    void eat() const override {
+        std::cout << name << " eats cat food" << std::endl;
+    }
+    
+    std::string getSpecies() const override {
+        return "Felis catus " ;
+    }
+    
+    // Cat-specific method
+    void purr() const {
+        std::cout << name << " purrs contentedly" << std::endl;
+    }
+    
+    ~Cat() {
+        std::cout << "Cat " << name << " destructor called" << std::endl;
+    }
+};
+
+class Bird : public Animal {
+private:
+    double wingSpan;
+    
+public:
+    Bird(const std::string& n, int a, double ws) 
+        : Animal(n, a), wingSpan(ws) {}
+    
+    void makeSound() const override {
+        std::cout << name << " chirps: Tweet! Tweet!" << std::endl;
+    }
+    
+    void move() const override {
+        std::cout << name << " flies with " << wingSpan << "cm wingspan" << std::endl;
+    }
+    
+    void eat() const override {
+        std::cout << name << " eats seeds and insects" << std::endl;
+    }
+    
+    std::string getSpecies() const override {
+        return "Aves (wingspan: " + std::to_string(wingSpan) + "cm)";
+    }
+    
+    // Bird-specific method
+    void fly() const {
+        std::cout << name << " soars through the sky" << std::endl;
+    }
+    
+    ~Bird() {
+        std::cout << "Bird " << name << " destructor called" << std::endl;
+    }
+};
+
+// Function demonstrating runtime polymorphism
+void performAnimalActions(Animal* animal) {
+    std::cout << "\n--- Animal Actions ---" << std::endl;
+    std::cout << "Species: " << animal->getSpecies() << std::endl;
+    animal->makeSound();
+    animal->move();
+    animal->eat();
+    animal->sleep(); // Non-virtual function
+}
+
+// Zoo class to manage animals
+class Zoo {
+private:
+    std::vector<std::unique_ptr<Animal>> animals;
+    
+public:
+    void addAnimal(std::unique_ptr<Animal> animal) {
+        animals.push_back(std::move(animal));
+    }
+    
+    void feedAllAnimals() const { // animals canbe of type -> cat/dog/lion/
+        std::cout << "\n=== Feeding Time at the Zoo ===" << std::endl;
+        for (const auto& animal : animals) {
+            animal->eat(); // Runtime polymorphism in action
+        }
+        if(animal == Dog)
+        Dog->eat()
+        else if (animal == cat)
+        Cat->eat()
+    }
+    
+    void makeAllAnimalsSound() const {
+        std::cout << "\n=== Animal Symphony ===" << std::endl;
+        for (const auto& animal : animals) {
+            animal->makeSound(); // Runtime polymorphism
+        }
+    }
+    
+    void displayAllAnimals() const {
+        std::cout << "\n=== Zoo Inventory ===" << std::endl;
+        for (size_t i = 0; i < animals.size(); ++i) {
+            std::cout << i + 1 << ". " << animals[i]->getName() 
+                      << " (" << animals[i]->getSpecies() << ")" << std::endl;
+        }
+    }
+    
+    ~Zoo() {
+        std::cout << "\n=== Zoo Cleanup ===" << std::endl;
+    }
+};
+
+int main() {
+    // Creating a zoo with different animals
+    Zoo zoo;
+    
+    zoo.addAnimal(std::make_unique<Dog>("Buddy", 3, "Golden Retriever"));
+    zoo.addAnimal(std::make_unique<Cat>("Whiskers", 2, true));
+    zoo.addAnimal(std::make_unique<Bird>("Tweety", 1, 25.5));
+    zoo.addAnimal(std::make_unique<Dog>("Rex", 5, "German Shepherd"));
+    zoo.addAnimal(std::make_unique<Cat>("Shadow", 4, false));
+    
+    // Display all animals
+    zoo.displayAllAnimals();
+    
+    // Demonstrate runtime polymorphism
+    zoo.makeAllAnimalsSound();
+    zoo.feedAllAnimals();
+    
+    // Direct polymorphism demonstration
+    Animal* animal1 = new Dog("Max", 2, "Labrador");
+    Animal* animal2 = new Cat("Luna", 3, true);
+    
+    performAnimalActions(animal1);
+    performAnimalActions(animal2);
+    
+    // Proper cleanup
+    delete animal1;
+    delete animal2;
+    
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#include <iostream>
+using namespace std;
+class Employee{
+    private:
+    string name;
+    string department;
+    int salary;
+ public:
+   Employee(string name, string dept, int salary) : name(name), department(dept), salary(salary);
+    // employee data management
+    void setName(string n)
+    name = n;
+    void setSalary(iny n)
+    salary = n;
+    int getSalary() return salary;
+    
+    // calculateBonus
+    int calculateBonus(){
+        return salary + 0.2*salary;
+    }
+    
+    //DB calls
+    void saveToDataBase(){
+         // api call to save Employee data into the Double
+    }
+    
+    void generatePaySlip(){
+        cout<<"Salary";
+    }
+}
+int main() {
+    cout << "Hello Geek!";
+    return 0;
+}
+
+
+
+
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <vector>
+
+// Responsibility 1: Employee data management
+class Employee {
+private:
+    std::string name;
+    double baseSalary;
+    std::string department;
+    std::string employeeId;
+    
+public:
+    Employee(const std::string& n, double salary, const std::string& dept, const std::string& id) 
+        : name(n), baseSalary(salary), department(dept), employeeId(id) {}
+    
+    // Getters and setters for employee data
+    std::string getName() const { return name; }
+    void setName(const std::string& n) { name = n; }
+    
+    double getBaseSalary() const { return baseSalary; }
+    void setBaseSalary(double salary) { baseSalary = salary; }
+    
+    std::string getDepartment() const { return department; }
+    void setDepartment(const std::string& dept) { department = dept; }
+    
+    std::string getEmployeeId() const { return employeeId; }
+};
+
+// Responsibility 2: Salary calculation
+class SalaryCalculator {
+public:
+    static double calculateTotalPay(const Employee& employee) {
+        double baseSalary = employee.getBaseSalary();
+        double bonus = calculateBonus(employee);
+        double allowances = calculateAllowances(employee);
+        return baseSalary + bonus + allowances;
+    }
+    
+    static double calculateBonus(const Employee& employee) {
+        // Different bonus rates for different departments
+        if (employee.getDepartment() == "IT") {
+            return employee.getBaseSalary() * 0.15; // 15% bonus
+        } else if (employee.getDepartment() == "Sales") {
+            return employee.getBaseSalary() * 0.12; // 12% bonus
+        }
+        return employee.getBaseSalary() * 0.10; // 10% default bonus
+    }
+    
+    static double calculateAllowances(const Employee& employee) {
+        return 500.0; // Fixed allowance for all employees
+    }
+};
+
+// Responsibility 3: Database operations
+class EmployeeRepository {
+private:
+    std::vector<Employee> employees;
+    
+public:
+    void save(const Employee& employee) {
+        std::cout << "Saving employee " << employee.getName() 
+                  << " (ID: " << employee.getEmployeeId() << ") to database" << std::endl;
+        employees.push_back(employee);
+    }
+    
+    Employee* findById(const std::string& id) {
+        for (auto& emp : employees) {
+            if (emp.getEmployeeId() == id) {
+                return &emp;
+            }
+        }
+        return nullptr;
+    }
+    
+    std::vector<Employee> findByDepartment(const std::string& department) {
+        std::vector<Employee> result;
+        for (const auto& emp : employees) {
+            if (emp.getDepartment() == department) {
+                result.push_back(emp);
+            }
+        }
+        return result;
+    }
+    
+    void deleteById(const std::string& id) {
+        employees.erase(
+            std::remove_if(employees.begin(), employees.end(),
+                [&id](const Employee& emp) { return emp.getEmployeeId() == id; }),
+            employees.end()
+        );
+        std::cout << "Employee with ID " << id << " deleted from database" << std::endl;
+    }
+};
+
+// Responsibility 4: Report generation
+class PayslipGenerator {
+public:
+    static void generatePayslip(const Employee& employee) {
+        double totalPay = SalaryCalculator::calculateTotalPay(employee);
+        double bonus = SalaryCalculator::calculateBonus(employee);
+        double allowances = SalaryCalculator::calculateAllowances(employee);
+        
+        std::cout << "\n================== PAYSLIP ==================" << std::endl;
+        std::cout << "Employee Name: " << employee.getName() << std::endl;
+        std::cout << "Employee ID: " << employee.getEmployeeId() << std::endl;
+        std::cout << "Department: " << employee.getDepartment() << std::endl;
+        std::cout << "--------------------------------------------" << std::endl;
+        std::cout << "Base Salary: $" << employee.getBaseSalary() << std::endl;
+        std::cout << "Bonus: $" << bonus << std::endl;
+        std::cout << "Allowances: $" << allowances << std::endl;
+        std::cout << "--------------------------------------------" << std::endl;
+        std::cout << "Total Pay: $" << totalPay << std::endl;
+        std::cout << "=============================================" << std::endl;
+    }
+    
+    static void generateDepartmentReport(const std::vector<Employee>& employees, 
+                                       const std::string& department) {
+        std::cout << "\n=== " << department << " DEPARTMENT REPORT ===" << std::endl;
+        double totalSalaries = 0;
+        for (const auto& emp : employees) {
+            double totalPay = SalaryCalculator::calculateTotalPay(emp);
+            std::cout << emp.getName() << " (" << emp.getEmployeeId() 
+                      << "): $" << totalPay << std::endl;
+            totalSalaries += totalPay;
+        }
+        std::cout << "Total Department Cost: $" << totalSalaries << std::endl;
+        std::cout << "Average Salary: $" << (employees.empty() ? 0 : totalSalaries / employees.size()) << std::endl;
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class AreaCalculator {
+public:
+    double calculateArea(const std::string& shapeType, double... args) {
+        if (shapeType == "rectangle") {
+            // args: width, height
+            return args[0] * args[1];
+        } else if (shapeType == "circle") {
+            // args: radius
+            return 3.14159 * args[0] * args[0];
+        } else if (shapeType == "triangle") {
+            // args: base, height
+            return 0.5 * args[0] * args[1];
+        }else if (shapeType == "elipse"){
+            
+        }
+        return 0;
+    }
+};
+
+
+
+class Shape { // abstract class, so it gaurantess that classes derived from this will all it memebr methods defined
+public:
+    virtual double calculateArea() const = 0;
+    virtual double calculatePerimeter() const = 0;
+    virtual std::string getName() const = 0;
+};
+
+
+class Rectangle : public Shape {
+    private :
+     int l;
+     int b;
+    public:
+      double calculateArea(){
+          return l*b;
+      }
+      double calculatePerimeter(){
+          return 2*(l+b);
+      }
+      
+     std::string getName(){
+         return "Rectangle";
+     }
+}
+
+
+class Circle : public Shape {
+     private:
+      int radius;
+      public:
+      double calculateArea(){
+          return radius**2
+      }
+      double calculatePerimeter(){
+          return 2*radius;
+      }
+      
+     std::string getName(){
+         return "Circle";
+     }
+}
+
+
+
+
+
+
+
+
+
+//Liskov Substitution Princliple
+// Objects of superClass should be replacable with Objects of its subclass without breaking the application
+
+
+
+
+
+// Following LSP
+class Bird { // superClass 
+public:
+    virtual void eat() {
+        cout << "Bird is eating" << endl;
+    }
+    
+    virtual void makeSound() {
+        cout << "Bird makes sound" << endl;
+    }
+    
+    void fly() override {
+        cout << "Sparrow flies quickly" << endl;
+    }
+};
+
+class FlyingBird : public Bird {
+public:
+    virtual void fly() {
+        cout << "Bird is flying" << endl;
+    }
+};
+
+class Sparrow : public FlyingBird {
+public:
+    void fly() override {
+        cout << "Sparrow flies quickly" << endl;
+    }
+    
+    void makeSound() override {
+        cout << "Sparrow chirps" << endl;
+    }
+};
+
+class Peigon : public FlyingBird {
+    void fly() override {
+        cout << "penguingon flies quickly" << endl;
+    }
+    
+}
+
+class Penguin : public Bird {
+public:
+    void makeSound() override {
+        cout << "Penguin makes penguin sound" << endl;
+    }
+    
+    // Penguins don't inherit fly() - they can't fly!
+    void swim() {
+        cout << "Penguin swims gracefully" << endl;
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// interface segragtion Princliple
+// No client should be forced to depend upon methods it doesn;t use
+
+
+
+
+
+
+// Violation of ISP
+class BadPrinter {
+public:
+    virtual void print() = 0;
+    virtual void scan() = 0;
+    virtual void fax() = 0;
+};
+
+// Following ISP
+class Printable {
+public:
+    virtual void print() = 0;
+};
+
+class Scannable {
+public:
+    virtual void scan() = 0;
+};
+
+class Faxable {
+public:
+    virtual void fax() = 0;
+};
+
+class SimplePrinter : public Printable {
+public:
+    void print() override {
+        cout << "Simple printer printing..." << endl;
+    }
+};
+
+class MultiFunctionPrinter : public Printable, public Scannable, public Faxable {
+public:
+    void print() override {
+        cout << "Multi-function printer printing..." << endl;
+    }
+    
+    void scan() override {
+        cout << "Multi-function printer scanning..." << endl;
+    }
+    
+    void fax() override {
+        cout << "Multi-function printer faxing..." << endl;
+    }
+};
+
+
+class DualFunctionPrinter : public fax, public scannable {
+    public :
+     void fax() override{
+         
+     }
+     void scan() override{
+         
+     }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Dependecny Inversion 
+// High level modules should not depend upon low level modules, both should depend upon abstractions
+class MySQLDatabase {
+public:
+    void save(const std::string& data) {
+        std::cout << "Saving to MySQL: " << data << std::endl;
+    }
+    
+    std::string load(const std::string& id) {
+        return "Data from MySQL for ID: " + id;
+    }
+};
+
+class EmailService {
+public:
+    void sendEmail(const std::string& recipient, const std::string& message) {
+        std::cout << "Sending email to " << recipient << ": " << message << std::endl;
+    }
+};
+
+// High-level class depends directly on low-level classes
+class UserService {  // UserService -> you need to have a MySQLDatabase, if you have PostgreSQLDatabase you need to create another class
+private:
+    MySQLDatabase database; // Direct dependency - bad!
+    EmailService emailService; // Direct dependency - bad!
+    
+public:
+    void createUser(const std::string& username, const std::string& email) {
+        std::string userData = "User: " + username + ", Email: " + email;
+        database.save(userData); // Tightly coupled
+        emailService.sendEmail(email, "Welcome!"); // Tightly coupled
+    }
+    
+    std::string getUser(const std::string& id) {
+        return database.load(id); // Tightly coupled
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#include <iostream>
+#include <string>
+#include <memory>
+#include <vector>
+#include <map>
+
+// Abstractions (interfaces)
+class IDatabase { // most commonly used principle in all the design patterns
+public:
+    virtual void save(const std::string& key, const std::string& data) = 0;
+    virtual std::string load(const std::string& key) = 0;
+    virtual bool exists(const std::string& key) = 0;
+    virtual void remove(const std::string& key) = 0;
+    virtual ~IDatabase() = default;
+};
+
+class IEmailService {
+public:
+    virtual void sendEmail(const std::string& recipient, const std::string& subject, const std::string& body) = 0;
+    virtual bool isValidEmail(const std::string& email) = 0;
+    virtual ~IEmailService() = default;
+};
+
+// Low-level implementations
+class MySQLDatabase : public IDatabase {
+private:
+    std::map<std::string, std::string> storage; // Simulated storage
+    
+public:
+    void save(const std::string& key, const std::string& data) override {
+        storage[key] = data;
+        std::cout << "[MySQL] Saved data for key: " << key << std::endl;
+    }
+    
+    std::string load(const std::string& key) override {
+        if (storage.find(key) != storage.end()) {
+            std::cout << "[MySQL] Loaded data for key: " << key << std::endl;
+            return storage[key];
+        }
+        return "";
+    }
+    
+    bool exists(const std::string& key) override {
+        return storage.find(key) != storage.end();
+    }
+    
+    void remove(const std::string& key) override {
+        storage.erase(key);
+        std::cout << "[MySQL] Removed data for key: " << key << std::endl;
+    }
+};
+
+class PostgreSQLDatabase : public IDatabase {
+private:
+    std::map<std::string, std::string> storage;
+    
+public:
+    void save(const std::string& key, const std::string& data) override {
+        storage[key] = data;
+        std::cout << "[PostgreSQL] Saved data for key: " << key << std::endl;
+    }
+    
+    std::string load(const std::string& key) override {
+        if (storage.find(key) != storage.end()) {
+            std::cout << "[PostgreSQL] Loaded data for key: " << key << std::endl;
+            return storage[key];
+        }
+        return "";
+    }
+    
+    bool exists(const std::string& key) override {
+        return storage.find(key) != storage.end();
+    }
+    
+    void remove(const std::string& key) override {
+        storage.erase(key);
+        std::cout << "[PostgreSQL] Removed data for key: " << key << std::endl;
+    }
+};
+
+class SMTPEmailService : public IEmailService {
+private:
+    std::string smtpServer;
+    
+public:
+    SMTPEmailService(const std::string& server) : smtpServer(server) {}
+    
+    void sendEmail(const std::string& recipient, const std::string& subject, const std::string& body) override {
+        std::cout << "[SMTP - " << smtpServer << "] Sending email to: " << recipient << std::endl;
+        std::cout << "Subject: " << subject << std::endl;
+        std::cout << "Body: " << body << std::endl;
+    }
+    
+    bool isValidEmail(const std::string& email) override {
+        return email.find('@') != std::string::npos && email.find('.') != std::string::npos;
+    }
+};
+
+// High-level module depends on abstractions
+class User {
+public:
+    std::string id;
+    std::string username;
+    std::string email;
+    std::string hashedPassword;
+    
+    User(const std::string& i, const std::string& u, const std::string& e, const std::string& p)
+        : id(i), username(u), email(e), hashedPassword(p) {}
+};
+
+class UserService {  // whenerver i'll be insatiating it m i can use what ever DB i want to use.
+private:    // UserService(PostgreSQL,smtp)
+            //UserService(MySql,smtp)
+    std::shared_ptr<IDatabase> database;
+    std::shared_ptr<IEmailService> emailService;
+    
+public:
+    // Dependency injection through constructor
+    UserService(std::shared_ptr<IDatabase> db, 
+                std::shared_ptr<IEmailService> email,)
+        : database(db), emailService(email) {}
+    
+    bool createUser(const std::string& username, const std::string& email, const std::string& password) {
+        if (!emailService->isValidEmail(email)) {
+            logger->log("ERROR", "Invalid email: " + email);
+            return false;
+        }
+        
+        // Check if user already exists
+        if (database->exists("user:" + username)) {
+            logger->log("WARNING", "User already exists: " + username);
+            return false;
+        }
+        
+        // Create user
+        std::string userId = "user_" + std::to_string(rand() % 10000);
+        User user(userId, username, email, "hashed_" + password);
+        
+        std::string userData = "ID:" + user.id + ",Username:" + user.username + 
+                              ",Email:" + user.email + ",Password:" + user.hashedPassword;
+        
+        database->save("user:" + username, userData);
+        
+        // Send welcome email
+        emailService->sendEmail(email, "Welcome to Our Service!", 
+                               "Hello " + username + ", welcome to our platform!");
+        
+        logger->log("INFO", "User created successfully: " + username);
+        return true;
+    }
+    
+    std::unique_ptr<User> getUser(const std::string& username) {
+        logger->log("INFO", "Retrieving user: " + username);
+        
+        if (!database->exists("user:" + username)) {
+            logger->log("WARNING", "User not found: " + username);
+            return nullptr;
+        }
+        
+        std::string userData = database->load("user:" + username);
+        
+        // Parse user data (simplified)
+        size_t idPos = userData.find("ID:") + 3;
+        size_t usernamePos = userData.find(",Username:") + 10;
+        size_t emailPos = userData.find(",Email:") + 7;
+        size_t passwordPos = userData.find(",Password:") + 10;
+        
+        std::string id = userData.substr(idPos, userData.find(",", idPos) - idPos);
+        std::string uname = userData.substr(usernamePos, userData.find(",", usernamePos) - usernamePos);
+        std::string email = userData.substr(emailPos, userData.find(",", emailPos) - emailPos);
+        std::string password = userData.substr(passwordPos);
+        
+        logger->log("INFO", "User retrieved successfully: " + username);
+        return std::make_unique<User>(id, uname, email, password);
+    }
+    
+    bool deleteUser(const std::string& username) {
+        logger->log("INFO", "Attempting to delete user: " + username);
+        
+        if (!database->exists("user:" + username)) {
+            logger->log("WARNING", "Cannot delete non-existent user: " + username);
+            return false;
+        }
+        
+        database->remove("user:" + username);
+        logger->log("INFO", "User deleted successfully: " + username);
+        return true;
+    }
+};
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
